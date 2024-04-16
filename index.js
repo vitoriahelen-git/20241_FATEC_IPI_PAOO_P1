@@ -8,7 +8,10 @@ const lerInput = require('readline').createInterface({
 
 const{
     APPID,  
-    URL_BASE
+    URL_BASE, 
+    URL_BASE2, 
+    LANGUAGE,
+    UNITS
 } = process.env
 
 lerInput.question('Digite o nome da Cidade: ', (Q) => {    
@@ -16,11 +19,22 @@ lerInput.question('Digite o nome da Cidade: ', (Q) => {
     
     axios.get(url)
     .then(res => {
-        console.log("LATITUDE:", res.data[0].lat)
-        console.log("LONGITUDE:", res.data[0].lon)
-    
-        lerInput.close(); 
+        const lat=res.data[0].lat
+        const lon=res.data[0].lon
+        console.log("LATITUDE:", lat)
+        console.log("LONGITUDE:", lon)
+        
+        const url2 = `${URL_BASE2}?lat=${lat}&lon=${lon}&appid=${APPID}&lang=${LANGUAGE}&units=${UNITS}`
+        axios.get(url2)
+        .then(res => {
+            console.log("Sensacao Termica:", res.data.main.feels_like)
+            console.log("Descricao:", res.data.weather[0].description)
+        })
     })
+    .catch(res => {
+        console.log("Cidade nao encontrada")
+    })
+    lerInput.close(); 
 })
 
 
