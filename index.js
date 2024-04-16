@@ -2,9 +2,9 @@ require('dotenv').config()
 const axios = require ('axios')
 
 const lerInput = require('readline').createInterface({
-    input: process.stdin, 
+    input: process.stdin,
     output: process.stdout
-})
+});
 
 const{
     APPID,  
@@ -14,27 +14,35 @@ const{
     UNITS
 } = process.env
 
-lerInput.question('Digite o nome da Cidade: ', (Q) => {    
-    const url = `${URL_BASE}?appid=${APPID}&q=${Q}`
-    
-    axios.get(url)
-    .then(res => {
-        const lat=res.data[0].lat
-        const lon=res.data[0].lon
-        console.log("LATITUDE:", lat)
-        console.log("LONGITUDE:", lon)
-        
-        const url2 = `${URL_BASE2}?lat=${lat}&lon=${lon}&appid=${APPID}&lang=${LANGUAGE}&units=${UNITS}`
-        axios.get(url2)
-        .then(res => {
-            console.log("Sensacao Termica:", res.data.main.feels_like)
-            console.log("Descricao:", res.data.weather[0].description)
-        })
-    })
-    .catch(res => {
-        console.log("Cidade nao encontrada")
-    })
-    lerInput.close(); 
-})
+async function obterCoords(Q) {
+    const url = `${URL_BASE}?q=${Q}&appid=${APPID}`;
 
+    try{
+        const res = await axios.get(url);
+        const lat = res.data[0].lat;
+        const lon = res.data[0].lon;
+        console.log("LATITUDE:", lat);
+        console.log("LONGITUDE:", lon);
+        return { lat, lon };
+    } catch(error) {
+        console.log("Cidade não encontrada.");
+        throw error;
+    }
+}
 
+async function obterPrevisao(lat, lon) {
+    const url = `${URL_BASE2}?lat=${lat}&lon=${lon}&appid=${APPID}&lang=${LANGUAGE}&units=${UNITS}`;
+    const res = await axios.get(url);
+    console.log("Sensação Térmica:", res.data.main.feels_like);
+    console.log("Descrição:", res.data.weather[0].description);
+}
+
+lerInput.question('Digite o nome da Cidade: ', async (Q) => {  
+    try{
+        const { lat, lon } = await obterCoords(Q);
+        obterPrevisao(lat, lon);
+    } catch (error) {
+        console.error("Digite uma cidade existente!");
+    } 
+    lerInput.close();
+});
